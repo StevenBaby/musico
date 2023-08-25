@@ -1,3 +1,6 @@
 pyside6
 mido
 python-rtmidi
+pyaudio
+numpy
+matplotlib
