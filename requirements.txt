@@ -2,5 +2,7 @@ pyside6
 mido
 python-rtmidi
 pyaudio
+PyAudioWPatch
 numpy
 matplotlib
+scipy

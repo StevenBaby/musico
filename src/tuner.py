@@ -1,14 +1,9 @@
-import pyaudio
+import pyaudiowpatch as pyaudio
 
 import utils
 from utils import *
 from logger import logger
 import ui.tuner
-
-
-class Signal(QtCore.QObject):
-
-    frame = QtCore.Signal(object)
 
 
 class MPLCanvas(FigureCanvasQTAgg):
@@ -26,6 +21,7 @@ class MPLCanvas(FigureCanvasQTAgg):
         self.axes.spines['left'].set_visible(False)
 
         self.axes.get_xaxis().set_ticks([])
+        self.axes.get_xaxis().set_ticks([], minor=True)
         self.axes.get_yaxis().set_ticks([])
 
         # # self.figure.tight_layout()
@@ -43,22 +39,21 @@ class AudioCanvas(MPLCanvas):
 
     def __init__(self) -> None:
         super().__init__()
-
+        self.inited = False
         self.line = None
         self.axes.set_ylim(-32768, 32768)
 
-        # self.axes.axis('off')
-
     def update_data(self, data: np.ndarray):
         # data = data.copy() / data.max()
-        if self.line is None:
-            self.line,  = self.axes.plot(data, color=utils.PINK)
+        if not self.inited:
+            self.inited = True
+            self.line, = self.axes.plot(data, color=utils.PINK)
         else:
             self.line.set_ydata(data)
         self.draw()
 
 
-class FreqTicksCanvas(MPLCanvas):
+class SpectrumTicksCanvas(MPLCanvas):
 
     def __init__(self) -> None:
         super().__init__()
@@ -81,12 +76,14 @@ class FreqTicksCanvas(MPLCanvas):
         logger.info("set labels %s", labels)
 
 
-class FreqCanvas(MPLCanvas):
+class SpectrumCanvas(MPLCanvas):
 
     def __init__(self) -> None:
         super().__init__()
-        self.line = None
+        self.spectrum_line = None
+        self.optimized_line = None
         self.bar = None
+        self.inited = False
 
         self.axes.set_ylim(-0.1, 1.1)
         self.axes.set_xlim(20, 5000)
@@ -100,31 +97,31 @@ class FreqCanvas(MPLCanvas):
             wspace=0,
         )
 
-    def update_data(self, freqs: np.ndarray, amps: np.ndarray, freq: float):
-        if freq > 5000:
+    def update_data(self, frequencies: np.ndarray, spectrum: np.ndarray, optimized: np.ndarray, frequency: float):
+        if frequency > 5000:
             return
 
-        freqs = freqs[:len(amps)]
-        freqs[freqs < 1] = 1.0
-
-        if amps.max() > 0:
-            amps = amps / amps.max()
-
         width = 0
-        if freq > 20:
-            width = freq / 50
+        if frequency > 50:
+            optimized.fill(0.0)
+            width = frequency / 50
 
-        if self.line is None:
-            self.line, = self.axes.plot(freqs, amps, color=utils.PINK)
+        if spectrum.max() > 0:
+            spectrum /= spectrum.max()
+        if optimized.max() > 0:
+            optimized /= optimized.max()
+
+        if not self.inited:
+            self.inited = True
+            self.spectrum_line, = self.axes.plot(frequencies, spectrum, color=utils.PINK, alpha=0.7)
+            self.optimized_line, = self.axes.plot(frequencies, optimized, color=utils.BLUE, alpha=0.5)
             self.bar, = self.axes.bar(
-                freq - width / 2, height=1, width=width, color=utils.ORANGE)
+                frequency - width / 2, height=1, width=width, color=utils.GREEN)
             self.axes.set_xscale('log')
-            self.axes.get_xaxis().set_ticks([], minor=True)
-            self.axes.get_xaxis().set_ticks([])
         else:
-            self.line.set_xdata(freqs)
-            self.line.set_ydata(amps)
-            self.bar.set_x(freq - width / 2)
+            self.spectrum_line.set_ydata(spectrum)
+            self.optimized_line.set_ydata(optimized)
+            self.bar.set_x(frequency - width / 2)
             self.bar.set_width(width)
 
         self.draw()
@@ -134,19 +131,30 @@ class CentBar(MPLCanvas):
 
     def __init__(self) -> None:
         super().__init__()
-        self.axes.set_xlim(-100.0, 100.0)
-        self.bar, = self.axes.barh([1, ], width=[50], color=utils.PINK)
+        self.axes.set_xlim(-50.1, 50.1)
+        self.bar, = self.axes.barh([1, ], width=[0], color=utils.PINK)
 
     def update_data(self, data):
         self.bar.set_width(data)
+        if data < -10:
+            self.bar.set_color(utils.PURPLE)
+        elif data > 10:
+            self.bar.set_color(utils.RED)
+        else:
+            self.bar.set_color(utils.GREEN)
         self.draw()
+
+
+class Signal(QtCore.QObject):
+
+    frame = QtCore.Signal(object, object, object, float)
 
 
 class Tuner(QtWidgets.QWidget):
 
-    SAMPLING_RATE = 44100
     CHUNK_SIZE = 2048
     BUFFER_SIZE = CHUNK_SIZE * 10
+    HPS_HARMONICS = 3
     A0 = 27.5
     NOTENAMES = 'A A# B C C# D D# E F F# G G#'.split(" ")
 
@@ -162,10 +170,10 @@ class Tuner(QtWidgets.QWidget):
         self.audio_canvas = AudioCanvas()
         self.form.buffer_layout.addWidget(self.audio_canvas)
 
-        self.freq_canvas = FreqCanvas()
-        self.form.freq_layout.addWidget(self.freq_canvas)
+        self.spectrum_canvas = SpectrumCanvas()
+        self.form.spectrum_layout.addWidget(self.spectrum_canvas)
 
-        self.form.freq_tick_layout.addWidget(FreqTicksCanvas())
+        self.form.spectrum_tick_layout.addWidget(SpectrumTicksCanvas())
 
         self.centbar = CentBar()
         self.form.centbar_layout.addWidget(self.centbar)
@@ -173,45 +181,46 @@ class Tuner(QtWidgets.QWidget):
         self.signal = Signal(self)
         self.signal.frame.connect(self.draw_frame)
 
-        self.form.input_devices_box.currentIndexChanged.connect(
-            self.input_index_changed,
-        )
+        self.form.input_devices_box.currentIndexChanged.connect(self.input_device_changed)
+        self.form.input_api_box.currentIndexChanged.connect(self.input_api_changed)
 
         # init audio
+        self.sample_rate = 44100
         self.buffer = np.zeros(self.BUFFER_SIZE)
         self.hanning = np.hanning(len(self.buffer))
-        self.frequencies = np.fft.fftfreq(
-            len(self.buffer), 1. / self.SAMPLING_RATE)
+        self.frequencies = np.fft.fftfreq(len(self.buffer), 1. / self.sample_rate)
+        self.frequencies = self.frequencies[:len(self.buffer) // 2]
 
         self.audio = pyaudio.PyAudio()
         for i in range(0, self.audio.get_host_api_count()):
-            info = self.audio.get_device_info_by_host_api_device_index(0, i)
-            if info.get('maxInputChannels') == 0:
-                continue
-            self.form.input_devices_box.addItem(
-                info.get('name'),
-                userData=info
-            )
-            logger.info(info)
+            api = self.audio.get_host_api_info_by_index(i)
+            self.form.input_api_box.addItem(api.get("name"), userData=api)
+            logger.info(api)
 
-        self.restart_stream(0)
+        self.form.input_api_box.setCurrentIndex(0)
+        self.form.input_devices_box.setCurrentIndex(0)
 
-    def restart_stream(self, index):
+    def restart_stream(self, api, index):
         if hasattr(self, 'stream'):
             self.stream.stop_stream()
-        self.form.input_devices_box.setCurrentIndex(index)
         info = self.form.input_devices_box.itemData(index)
-        self.stream = self.audio.open(
-            format=pyaudio.paInt16,
-            channels=1,
-            rate=self.SAMPLING_RATE,
-            input=True,
-            # output=True,
-            frames_per_buffer=self.CHUNK_SIZE,
-            stream_callback=self.stream_callback,
-            input_device_index=info.get('index'),
-        )
+        self.sample_rate = int(info.get("defaultSampleRate"))
         logger.info("start stream %s", info)
+        try:
+            self.stream = self.audio.open(
+                format=pyaudio.paInt16,
+                channels=1,
+                rate=self.sample_rate,
+                input=True,
+                # output=True,
+                frames_per_buffer=self.CHUNK_SIZE,
+                stream_callback=self.stream_callback,
+                input_device_index=info.get('index'),
+            )
+        except OSError as e:
+            logger.error(e)
+            self.form.input_devices_box.setItemText(index, f"[INVALID] {info.get('name')}")
+            return
         self.stream.start_stream()
 
     def closeEvent(self, event: QCloseEvent) -> None:
@@ -222,9 +231,25 @@ class Tuner(QtWidgets.QWidget):
 
         return super().closeEvent(event)
 
-    def input_index_changed(self, index):
+    def input_device_changed(self, index):
         # logger.debug("index changed %s", index)
-        self.restart_stream(index)
+        api = self.form.input_api_box.currentIndex()
+        self.restart_stream(api, index)
+
+    def input_api_changed(self, index):
+        self.form.input_devices_box.clear()
+        logger.debug(index)
+        api = self.form.input_api_box.itemData(index)
+        for i in range(api.get('deviceCount')):
+            info = self.audio.get_device_info_by_host_api_device_index(index, i)
+            if info.get('maxInputChannels') == 0:
+                continue
+            logger.info(info)
+            self.form.input_devices_box.addItem(
+                info.get('name'),
+                userData=info
+            )
+        self.restart_stream(api, 0)
 
     def update_note(self, freq: float):
         if freq < 27.5 or freq > 5000:
@@ -237,7 +262,7 @@ class Tuner(QtWidgets.QWidget):
         self.form.hertz.setText(f'{freq:04.02f}')
 
         cents = (n - round(n)) * 100
-        self.form.cents.setText(f'{cents:.02f}')
+        self.form.cents.setText(f'{cents:+.02f}')
         self.centbar.update_data(cents)
 
         # logger.debug(n)
@@ -253,15 +278,32 @@ class Tuner(QtWidgets.QWidget):
             number += 1
         self.form.number.setText(str(number))
 
-    @QtCore.Slot(object)
-    def draw_frame(self, datas):
-        buffer = datas[0]
-        freqs = datas[1]
-        amps = datas[2]
-        freq = datas[3]
-        self.update_note(freq)
-        self.freq_canvas.update_data(freqs, amps, freq)
+    def draw_frame(self, buffer: np.ndarray, spectrum: np.ndarray, optimized: np.ndarray, frequency: float):
+        self.update_note(frequency)
+        self.spectrum_canvas.update_data(self.frequencies, spectrum, optimized, frequency)
         self.audio_canvas.update_data(buffer)
+
+    def algorithm_harmonic_product_spectrum(self, buffer: np.array):
+
+        spectrum = np.absolute(np.fft.fft(buffer))
+
+        # shannon nyquist theorem
+        spectrum = spectrum[:len(self.buffer) // 2]
+
+        # todo (Harmonic Product Spectrum)
+        # reference:
+        # http://musicweb.ucsd.edu/~trsmyth/analysis/Harmonic_Product_Spectrum.html
+        optimized = spectrum.copy()
+        for harmonic in range(2, self.HPS_HARMONICS + 1):
+            hps_len = int(np.ceil(len(spectrum) / harmonic))
+            optimized[:hps_len] *= spectrum[::harmonic]
+
+        # smooth low frequencis
+        args = np.argwhere(self.frequencies < 200)[-1, 0]
+        x = (np.arange(args) - args // 2) / args * 8
+        optimized[:args] *= scispecial.expit(x)
+
+        return spectrum, optimized
 
     def stream_callback(self, data, frame_count, time_info, status):
         # logger.debug("input stream data len %s %s", len(data), type(data))
@@ -271,24 +313,16 @@ class Tuner(QtWidgets.QWidget):
         # https://github.com/TomSchimansky/GuitarTuner
         self.buffer[:-self.CHUNK_SIZE] = self.buffer[self.CHUNK_SIZE:]
         self.buffer[-self.CHUNK_SIZE:] = frame
-        self.buffer[np.abs(self.buffer) < 10.0] = 0.0
 
-        ys = self.buffer * self.hanning
+        # self.buffer[np.abs(self.buffer) < .0] = 0.0
 
-        amps = np.absolute(np.fft.fft(ys))
-        amps = amps[:int(len(self.buffer) / 2)]
+        buffer = self.buffer * self.hanning
 
-        # todo (Harmonic Product Spectrum)
-        # reference:
-        # http://musicweb.ucsd.edu/~trsmyth/analysis/Harmonic_Product_Spectrum.html
+        spectrum, optimized = self.algorithm_harmonic_product_spectrum(buffer)
 
-        freq = self.frequencies[np.argmax(amps)]
+        frequency = self.frequencies[np.argmax(optimized)]
 
-        self.signal.frame.emit([
-            self.buffer,
-            self.frequencies,
-            amps,
-            freq])
+        self.signal.frame.emit(self.buffer, spectrum, optimized, frequency)
 
         return (data, pyaudio.paContinue)
 

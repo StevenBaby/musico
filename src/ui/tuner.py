@@ -23,9 +23,11 @@ class Ui_Tuner(object):
     def setupUi(self, Tuner):
         if not Tuner.objectName():
             Tuner.setObjectName(u"Tuner")
-        Tuner.resize(535, 713)
+        Tuner.resize(418, 741)
         self.verticalLayout_6 = QVBoxLayout(Tuner)
         self.verticalLayout_6.setObjectName(u"verticalLayout_6")
+        self.horizontalLayout_9 = QHBoxLayout()
+        self.horizontalLayout_9.setObjectName(u"horizontalLayout_9")
         self.widget0 = QWidget(Tuner)
         self.widget0.setObjectName(u"widget0")
         self.horizontalLayout_3 = QHBoxLayout(self.widget0)
@@ -41,13 +43,36 @@ class Ui_Tuner(object):
 
         self.horizontalLayout_3.addWidget(self.label_2)
 
-        self.input_devices_box = QComboBox(self.widget0)
+        self.input_api_box = QComboBox(self.widget0)
+        self.input_api_box.setObjectName(u"input_api_box")
+
+        self.horizontalLayout_3.addWidget(self.input_api_box)
+
+
+        self.horizontalLayout_9.addWidget(self.widget0)
+
+        self.widget6 = QWidget(Tuner)
+        self.widget6.setObjectName(u"widget6")
+        self.horizontalLayout_7 = QHBoxLayout(self.widget6)
+        self.horizontalLayout_7.setObjectName(u"horizontalLayout_7")
+        self.horizontalLayout_7.setContentsMargins(0, 0, 0, 0)
+        self.label_3 = QLabel(self.widget6)
+        self.label_3.setObjectName(u"label_3")
+        sizePolicy.setHeightForWidth(self.label_3.sizePolicy().hasHeightForWidth())
+        self.label_3.setSizePolicy(sizePolicy)
+
+        self.horizontalLayout_7.addWidget(self.label_3)
+
+        self.input_devices_box = QComboBox(self.widget6)
         self.input_devices_box.setObjectName(u"input_devices_box")
 
-        self.horizontalLayout_3.addWidget(self.input_devices_box)
+        self.horizontalLayout_7.addWidget(self.input_devices_box)
 
 
-        self.verticalLayout_6.addWidget(self.widget0)
+        self.horizontalLayout_9.addWidget(self.widget6)
+
+
+        self.verticalLayout_6.addLayout(self.horizontalLayout_9)
 
         self.splitter = QSplitter(Tuner)
         self.splitter.setObjectName(u"splitter")
@@ -65,53 +90,53 @@ class Ui_Tuner(object):
         self.verticalLayout_2.addLayout(self.buffer_layout)
 
         self.splitter.addWidget(self.widget1)
-        self.widget = QWidget(self.splitter)
-        self.widget.setObjectName(u"widget")
-        self.verticalLayout_3 = QVBoxLayout(self.widget)
+        self.layoutWidget = QWidget(self.splitter)
+        self.layoutWidget.setObjectName(u"layoutWidget")
+        self.verticalLayout_3 = QVBoxLayout(self.layoutWidget)
         self.verticalLayout_3.setSpacing(0)
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
         self.verticalLayout_3.setContentsMargins(0, 0, 0, 0)
-        self.widget4 = QWidget(self.widget)
+        self.widget4 = QWidget(self.layoutWidget)
         self.widget4.setObjectName(u"widget4")
         self.widget4.setMinimumSize(QSize(0, 200))
         self.widget4.setMaximumSize(QSize(16777215, 16777215))
         self.verticalLayout_5 = QVBoxLayout(self.widget4)
         self.verticalLayout_5.setObjectName(u"verticalLayout_5")
         self.verticalLayout_5.setContentsMargins(0, 0, 0, 0)
-        self.freq_layout = QVBoxLayout()
-        self.freq_layout.setObjectName(u"freq_layout")
+        self.spectrum_layout = QVBoxLayout()
+        self.spectrum_layout.setObjectName(u"spectrum_layout")
 
-        self.verticalLayout_5.addLayout(self.freq_layout)
+        self.verticalLayout_5.addLayout(self.spectrum_layout)
 
 
         self.verticalLayout_3.addWidget(self.widget4)
 
-        self.widget5 = QWidget(self.widget)
+        self.widget5 = QWidget(self.layoutWidget)
         self.widget5.setObjectName(u"widget5")
         self.widget5.setMinimumSize(QSize(0, 25))
         self.widget5.setMaximumSize(QSize(16777215, 25))
         self.horizontalLayout_4 = QHBoxLayout(self.widget5)
         self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
         self.horizontalLayout_4.setContentsMargins(0, 0, 0, 0)
-        self.freq_tick_layout = QVBoxLayout()
-        self.freq_tick_layout.setObjectName(u"freq_tick_layout")
+        self.spectrum_tick_layout = QVBoxLayout()
+        self.spectrum_tick_layout.setObjectName(u"spectrum_tick_layout")
 
-        self.horizontalLayout_4.addLayout(self.freq_tick_layout)
+        self.horizontalLayout_4.addLayout(self.spectrum_tick_layout)
 
 
         self.verticalLayout_3.addWidget(self.widget5)
 
-        self.splitter.addWidget(self.widget)
-        self.layoutWidget = QWidget(self.splitter)
-        self.layoutWidget.setObjectName(u"layoutWidget")
-        self.horizontalLayout_6 = QHBoxLayout(self.layoutWidget)
+        self.splitter.addWidget(self.layoutWidget)
+        self.layoutWidget1 = QWidget(self.splitter)
+        self.layoutWidget1.setObjectName(u"layoutWidget1")
+        self.horizontalLayout_6 = QHBoxLayout(self.layoutWidget1)
         self.horizontalLayout_6.setObjectName(u"horizontalLayout_6")
         self.horizontalLayout_6.setContentsMargins(0, 0, 0, 0)
         self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
         self.horizontalLayout_6.addItem(self.horizontalSpacer)
 
-        self.frame = QFrame(self.layoutWidget)
+        self.frame = QFrame(self.layoutWidget1)
         self.frame.setObjectName(u"frame")
         sizePolicy1 = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         sizePolicy1.setHorizontalStretch(0)
@@ -246,7 +271,7 @@ class Ui_Tuner(object):
 
         self.horizontalLayout_6.addItem(self.horizontalSpacer_2)
 
-        self.splitter.addWidget(self.layoutWidget)
+        self.splitter.addWidget(self.layoutWidget1)
 
         self.verticalLayout_6.addWidget(self.splitter)
 
@@ -258,7 +283,8 @@ class Ui_Tuner(object):
 
     def retranslateUi(self, Tuner):
         Tuner.setWindowTitle(QCoreApplication.translate("Tuner", u"Tuner", None))
-        self.label_2.setText(QCoreApplication.translate("Tuner", u"Input Device", None))
+        self.label_2.setText(QCoreApplication.translate("Tuner", u"Input API", None))
+        self.label_3.setText(QCoreApplication.translate("Tuner", u"Input Device", None))
         self.note.setText(QCoreApplication.translate("Tuner", u"A", None))
         self.accidental.setText(QCoreApplication.translate("Tuner", u"#", None))
         self.number.setText(QCoreApplication.translate("Tuner", u"4", None))
