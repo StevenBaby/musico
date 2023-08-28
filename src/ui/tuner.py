@@ -23,9 +23,9 @@ class Ui_Tuner(object):
     def setupUi(self, Tuner):
         if not Tuner.objectName():
             Tuner.setObjectName(u"Tuner")
-        Tuner.resize(451, 551)
-        self.verticalLayout_3 = QVBoxLayout(Tuner)
-        self.verticalLayout_3.setObjectName(u"verticalLayout_3")
+        Tuner.resize(535, 713)
+        self.verticalLayout_6 = QVBoxLayout(Tuner)
+        self.verticalLayout_6.setObjectName(u"verticalLayout_6")
         self.widget0 = QWidget(Tuner)
         self.widget0.setObjectName(u"widget0")
         self.horizontalLayout_3 = QHBoxLayout(self.widget0)
@@ -47,7 +47,7 @@ class Ui_Tuner(object):
         self.horizontalLayout_3.addWidget(self.input_devices_box)
 
 
-        self.verticalLayout_3.addWidget(self.widget0)
+        self.verticalLayout_6.addWidget(self.widget0)
 
         self.splitter = QSplitter(Tuner)
         self.splitter.setObjectName(u"splitter")
@@ -65,6 +65,19 @@ class Ui_Tuner(object):
         self.verticalLayout_2.addLayout(self.buffer_layout)
 
         self.splitter.addWidget(self.widget1)
+        self.widget4 = QWidget(self.splitter)
+        self.widget4.setObjectName(u"widget4")
+        self.widget4.setMinimumSize(QSize(0, 200))
+        self.widget4.setMaximumSize(QSize(16777215, 16777215))
+        self.verticalLayout_5 = QVBoxLayout(self.widget4)
+        self.verticalLayout_5.setObjectName(u"verticalLayout_5")
+        self.verticalLayout_5.setContentsMargins(0, 0, 0, 0)
+        self.freq_layout = QVBoxLayout()
+        self.freq_layout.setObjectName(u"freq_layout")
+
+        self.verticalLayout_5.addLayout(self.freq_layout)
+
+        self.splitter.addWidget(self.widget4)
         self.widget = QWidget(self.splitter)
         self.widget.setObjectName(u"widget")
         self.horizontalLayout_6 = QHBoxLayout(self.widget)
@@ -211,7 +224,7 @@ class Ui_Tuner(object):
 
         self.splitter.addWidget(self.widget)
 
-        self.verticalLayout_3.addWidget(self.splitter)
+        self.verticalLayout_6.addWidget(self.splitter)
 
 
         self.retranslateUi(Tuner)

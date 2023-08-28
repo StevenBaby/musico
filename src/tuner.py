@@ -23,6 +23,7 @@ class MPLCanvas(FigureCanvasQTAgg):
         super().__init__(self.figure)
         self.axes = self.figure.add_subplot(1, 1, 1)
         self.axes.margins(0.01)
+        self.axes.set_facecolor((0.8, 0.8, 0.8))
 
         self.axes.spines['top'].set_visible(False)
         self.axes.spines['right'].set_visible(False)
@@ -32,9 +33,7 @@ class MPLCanvas(FigureCanvasQTAgg):
         self.axes.get_xaxis().set_ticks([])
         self.axes.get_yaxis().set_ticks([])
 
-        self.axes.set_facecolor((0.8, 0.8, 0.8))
-
-        # self.figure.tight_layout()
+        # # self.figure.tight_layout()
         self.figure.subplots_adjust(
             top=1,
             bottom=0,
@@ -47,17 +46,54 @@ class MPLCanvas(FigureCanvasQTAgg):
 
 class AudioCanvas(MPLCanvas):
 
-    def __init__(self, buffer_size=1024) -> None:
+    def __init__(self) -> None:
         super().__init__()
 
-        self.line, = self.axes.plot(range(buffer_size), color=utils.COLOR)
+        self.line = None
         self.axes.set_ylim(-32768, 32768)
 
         # self.axes.axis('off')
 
     def update_data(self, data: np.ndarray):
         # data = data.copy() / data.max()
-        self.line.set_ydata(data)
+        if self.line is None:
+            self.line,  = self.axes.plot(data, color=utils.COLOR)
+        else:
+            self.line.set_ydata(data)
+        self.draw()
+
+
+class FreqCanvas(MPLCanvas):
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.line = None
+        self.axes.set_ylim(-0.1, 1.5)
+        self.axes.set_xscale('log')
+        self.figure.subplots_adjust(
+            top=1,
+            bottom=0.15,
+            left=0,
+            right=1,
+            hspace=0,
+            wspace=0,
+        )
+
+    def update_data(self, freqs: np.ndarray, amps: np.ndarray, freq: float):
+        if freq < 27.5 or freq > 5000:
+            return
+
+        freqs = freqs[:len(amps)]
+        freqs[freqs < 1] = 1.0
+
+        amps = amps / amps.max()
+
+        if self.line is None:
+            self.line, = self.axes.plot(freqs, amps, color=utils.COLOR)
+        else:
+            self.line.set_xdata(freqs)
+            self.line.set_ydata(amps)
+
         self.draw()
 
 
@@ -91,8 +127,11 @@ class Tuner(QtWidgets.QWidget):
         self.form = ui.tuner.Ui_Tuner()
         self.form.setupUi(self)
 
-        self.audio_canvas = AudioCanvas(self.BUFFER_SIZE)
+        self.audio_canvas = AudioCanvas()
         self.form.buffer_layout.addWidget(self.audio_canvas)
+
+        self.freq_canvas = FreqCanvas()
+        self.form.freq_layout.addWidget(self.freq_canvas)
 
         self.centbar = CentBar()
         self.form.centbar_layout.addWidget(self.centbar)
@@ -173,15 +212,18 @@ class Tuner(QtWidgets.QWidget):
             self.form.accidental.setText(name[1])
         else:
             self.form.accidental.setText(" ")
-        if note > 2: # start with A0 A#0 B0 C1 ...
+        if note > 2:  # start with A0 A#0 B0 C1 ...
             number += 1
         self.form.number.setText(str(number))
 
     @QtCore.Slot(object)
     def draw_frame(self, datas):
         buffer = datas[0]
-        freq = datas[1]
+        freqs = datas[1]
+        amps = datas[2]
+        freq = datas[3]
         self.update_note(freq)
+        self.freq_canvas.update_data(freqs, amps, freq)
         self.audio_canvas.update_data(buffer)
 
     def stream_callback(self, data, frame_count, time_info, status):
@@ -202,7 +244,7 @@ class Tuner(QtWidgets.QWidget):
         freq = freqs[np.argmax(amps)]
         # logger.debug(freq)
 
-        self.signal.frame.emit([self.buffer, freq])
+        self.signal.frame.emit([self.buffer, freqs, amps, freq])
 
         return (data, pyaudio.paContinue)
 
