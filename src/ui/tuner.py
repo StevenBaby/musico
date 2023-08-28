@@ -15,58 +15,72 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QFrame, QHBoxLayout, QLabel,
-    QLayout, QSizePolicy, QSpacerItem, QSplitter,
-    QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QComboBox, QFrame, QHBoxLayout,
+    QLabel, QLayout, QSizePolicy, QSpacerItem,
+    QSplitter, QVBoxLayout, QWidget)
 
 class Ui_Tuner(object):
     def setupUi(self, Tuner):
         if not Tuner.objectName():
             Tuner.setObjectName(u"Tuner")
         Tuner.resize(451, 551)
-        self.verticalLayout_2 = QVBoxLayout(Tuner)
-        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
+        self.verticalLayout_3 = QVBoxLayout(Tuner)
+        self.verticalLayout_3.setObjectName(u"verticalLayout_3")
+        self.widget0 = QWidget(Tuner)
+        self.widget0.setObjectName(u"widget0")
+        self.horizontalLayout_3 = QHBoxLayout(self.widget0)
+        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
+        self.horizontalLayout_3.setContentsMargins(0, 0, 0, 0)
+        self.label_2 = QLabel(self.widget0)
+        self.label_2.setObjectName(u"label_2")
+        sizePolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.label_2.sizePolicy().hasHeightForWidth())
+        self.label_2.setSizePolicy(sizePolicy)
+
+        self.horizontalLayout_3.addWidget(self.label_2)
+
+        self.input_devices_box = QComboBox(self.widget0)
+        self.input_devices_box.setObjectName(u"input_devices_box")
+
+        self.horizontalLayout_3.addWidget(self.input_devices_box)
+
+
+        self.verticalLayout_3.addWidget(self.widget0)
+
         self.splitter = QSplitter(Tuner)
         self.splitter.setObjectName(u"splitter")
-        self.splitter.setStyleSheet(u"QSplitter::handle {\n"
-"	background-color: rgb(255, 255, 255);\n"
-"	border-color: rgb(0, 0, 0);\n"
-"}")
-        self.splitter.setFrameShape(QFrame.NoFrame)
-        self.splitter.setFrameShadow(QFrame.Plain)
         self.splitter.setOrientation(Qt.Vertical)
-        self.splitter.setOpaqueResize(True)
-        self.frame_2 = QFrame(self.splitter)
-        self.frame_2.setObjectName(u"frame_2")
-        self.frame_2.setMinimumSize(QSize(0, 100))
-        self.frame_2.setFrameShape(QFrame.NoFrame)
-        self.frame_2.setFrameShadow(QFrame.Plain)
-        self.verticalLayout_3 = QVBoxLayout(self.frame_2)
-        self.verticalLayout_3.setSpacing(0)
-        self.verticalLayout_3.setObjectName(u"verticalLayout_3")
-        self.verticalLayout_3.setContentsMargins(0, 0, 0, 0)
+        self.widget1 = QWidget(self.splitter)
+        self.widget1.setObjectName(u"widget1")
+        self.widget1.setMinimumSize(QSize(0, 200))
+        self.verticalLayout_2 = QVBoxLayout(self.widget1)
+        self.verticalLayout_2.setSpacing(0)
+        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
+        self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
         self.buffer_layout = QVBoxLayout()
         self.buffer_layout.setObjectName(u"buffer_layout")
 
-        self.verticalLayout_3.addLayout(self.buffer_layout)
+        self.verticalLayout_2.addLayout(self.buffer_layout)
 
-        self.splitter.addWidget(self.frame_2)
+        self.splitter.addWidget(self.widget1)
         self.widget = QWidget(self.splitter)
         self.widget.setObjectName(u"widget")
-        self.horizontalLayout_3 = QHBoxLayout(self.widget)
-        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
-        self.horizontalLayout_3.setContentsMargins(0, 0, 0, 0)
+        self.horizontalLayout_6 = QHBoxLayout(self.widget)
+        self.horizontalLayout_6.setObjectName(u"horizontalLayout_6")
+        self.horizontalLayout_6.setContentsMargins(0, 0, 0, 0)
         self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
-        self.horizontalLayout_3.addItem(self.horizontalSpacer)
+        self.horizontalLayout_6.addItem(self.horizontalSpacer)
 
         self.frame = QFrame(self.widget)
         self.frame.setObjectName(u"frame")
-        sizePolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.frame.sizePolicy().hasHeightForWidth())
-        self.frame.setSizePolicy(sizePolicy)
+        sizePolicy1 = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        sizePolicy1.setHorizontalStretch(0)
+        sizePolicy1.setVerticalStretch(0)
+        sizePolicy1.setHeightForWidth(self.frame.sizePolicy().hasHeightForWidth())
+        self.frame.setSizePolicy(sizePolicy1)
         self.frame.setFrameShape(QFrame.Box)
         self.frame.setFrameShadow(QFrame.Sunken)
         self.verticalLayout = QVBoxLayout(self.frame)
@@ -84,15 +98,15 @@ class Ui_Tuner(object):
 
         self.horizontalLayout.addWidget(self.note)
 
-        self.widget1 = QWidget(self.frame)
-        self.widget1.setObjectName(u"widget1")
-        self.widget1.setMaximumSize(QSize(50, 16777215))
-        self.verticalLayout_4 = QVBoxLayout(self.widget1)
+        self.widget2 = QWidget(self.frame)
+        self.widget2.setObjectName(u"widget2")
+        self.widget2.setMaximumSize(QSize(50, 16777215))
+        self.verticalLayout_4 = QVBoxLayout(self.widget2)
         self.verticalLayout_4.setObjectName(u"verticalLayout_4")
-        self.accidental = QLabel(self.widget1)
+        self.accidental = QLabel(self.widget2)
         self.accidental.setObjectName(u"accidental")
-        sizePolicy.setHeightForWidth(self.accidental.sizePolicy().hasHeightForWidth())
-        self.accidental.setSizePolicy(sizePolicy)
+        sizePolicy1.setHeightForWidth(self.accidental.sizePolicy().hasHeightForWidth())
+        self.accidental.setSizePolicy(sizePolicy1)
         self.accidental.setMaximumSize(QSize(30, 16777215))
         font1 = QFont()
         font1.setFamilies([u"Fira Code"])
@@ -102,10 +116,10 @@ class Ui_Tuner(object):
 
         self.verticalLayout_4.addWidget(self.accidental)
 
-        self.number = QLabel(self.widget1)
+        self.number = QLabel(self.widget2)
         self.number.setObjectName(u"number")
-        sizePolicy.setHeightForWidth(self.number.sizePolicy().hasHeightForWidth())
-        self.number.setSizePolicy(sizePolicy)
+        sizePolicy1.setHeightForWidth(self.number.sizePolicy().hasHeightForWidth())
+        self.number.setSizePolicy(sizePolicy1)
         self.number.setMaximumSize(QSize(30, 16777215))
         self.number.setFont(font1)
         self.number.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignVCenter)
@@ -113,7 +127,7 @@ class Ui_Tuner(object):
         self.verticalLayout_4.addWidget(self.number)
 
 
-        self.horizontalLayout.addWidget(self.widget1)
+        self.horizontalLayout.addWidget(self.widget2)
 
 
         self.verticalLayout.addLayout(self.horizontalLayout)
@@ -139,8 +153,8 @@ class Ui_Tuner(object):
         self.horizontalLayout_8.setObjectName(u"horizontalLayout_8")
         self.cents = QLabel(self.frame)
         self.cents.setObjectName(u"cents")
-        sizePolicy.setHeightForWidth(self.cents.sizePolicy().hasHeightForWidth())
-        self.cents.setSizePolicy(sizePolicy)
+        sizePolicy1.setHeightForWidth(self.cents.sizePolicy().hasHeightForWidth())
+        self.cents.setSizePolicy(sizePolicy1)
         self.cents.setMinimumSize(QSize(100, 0))
         font2 = QFont()
         font2.setFamilies([u"Microsoft YaHei UI"])
@@ -152,11 +166,8 @@ class Ui_Tuner(object):
 
         self.cents_label = QLabel(self.frame)
         self.cents_label.setObjectName(u"cents_label")
-        sizePolicy1 = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
-        sizePolicy1.setHorizontalStretch(0)
-        sizePolicy1.setVerticalStretch(0)
-        sizePolicy1.setHeightForWidth(self.cents_label.sizePolicy().hasHeightForWidth())
-        self.cents_label.setSizePolicy(sizePolicy1)
+        sizePolicy.setHeightForWidth(self.cents_label.sizePolicy().hasHeightForWidth())
+        self.cents_label.setSizePolicy(sizePolicy)
         font3 = QFont()
         font3.setFamilies([u"Fira Code"])
         font3.setPointSize(18)
@@ -172,8 +183,8 @@ class Ui_Tuner(object):
         self.horizontalLayout_2.setSizeConstraint(QLayout.SetMinimumSize)
         self.hertz = QLabel(self.frame)
         self.hertz.setObjectName(u"hertz")
-        sizePolicy.setHeightForWidth(self.hertz.sizePolicy().hasHeightForWidth())
-        self.hertz.setSizePolicy(sizePolicy)
+        sizePolicy1.setHeightForWidth(self.hertz.sizePolicy().hasHeightForWidth())
+        self.hertz.setSizePolicy(sizePolicy1)
         self.hertz.setMinimumSize(QSize(100, 0))
         self.hertz.setFont(font2)
         self.hertz.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
@@ -182,8 +193,8 @@ class Ui_Tuner(object):
 
         self.hertz_label = QLabel(self.frame)
         self.hertz_label.setObjectName(u"hertz_label")
-        sizePolicy1.setHeightForWidth(self.hertz_label.sizePolicy().hasHeightForWidth())
-        self.hertz_label.setSizePolicy(sizePolicy1)
+        sizePolicy.setHeightForWidth(self.hertz_label.sizePolicy().hasHeightForWidth())
+        self.hertz_label.setSizePolicy(sizePolicy)
         self.hertz_label.setFont(font3)
 
         self.horizontalLayout_2.addWidget(self.hertz_label)
@@ -192,15 +203,15 @@ class Ui_Tuner(object):
         self.verticalLayout.addLayout(self.horizontalLayout_2)
 
 
-        self.horizontalLayout_3.addWidget(self.frame)
+        self.horizontalLayout_6.addWidget(self.frame)
 
         self.horizontalSpacer_2 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
-        self.horizontalLayout_3.addItem(self.horizontalSpacer_2)
+        self.horizontalLayout_6.addItem(self.horizontalSpacer_2)
 
         self.splitter.addWidget(self.widget)
 
-        self.verticalLayout_2.addWidget(self.splitter)
+        self.verticalLayout_3.addWidget(self.splitter)
 
 
         self.retranslateUi(Tuner)
@@ -210,6 +221,7 @@ class Ui_Tuner(object):
 
     def retranslateUi(self, Tuner):
         Tuner.setWindowTitle(QCoreApplication.translate("Tuner", u"Tuner", None))
+        self.label_2.setText(QCoreApplication.translate("Tuner", u"Input Device", None))
         self.note.setText(QCoreApplication.translate("Tuner", u"A", None))
         self.accidental.setText(QCoreApplication.translate("Tuner", u"#", None))
         self.number.setText(QCoreApplication.translate("Tuner", u"4", None))
