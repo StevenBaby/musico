@@ -1,7 +1,3 @@
-
-from typing import Optional
-import PySide6.QtCore
-import PySide6.QtWidgets
 import pyaudio
 
 import utils
@@ -24,21 +20,21 @@ class AudioCanvas(FigureCanvasQTAgg):
 
     def __init__(self, buffer_size=1024) -> None:
         super().__init__(Figure())
-        self.ax = self.figure.add_subplot(1, 1, 1)
-        self.line, = self.ax.plot(range(buffer_size))
-        self.ax.set_ylim(-32768, 32768)
-        self.ax.margins(0.01)
+        self.axes = self.figure.add_subplot(1, 1, 1)
+        self.line, = self.axes.plot(range(buffer_size), color=utils.COLOR)
+        self.axes.set_ylim(-32768, 32768)
+        self.axes.margins(0.01)
         # self.axes.axis('off')
 
-        self.ax.spines['top'].set_visible(False)
-        self.ax.spines['right'].set_visible(False)
-        self.ax.spines['bottom'].set_visible(False)
-        self.ax.spines['left'].set_visible(False)
+        self.axes.spines['top'].set_visible(False)
+        self.axes.spines['right'].set_visible(False)
+        self.axes.spines['bottom'].set_visible(False)
+        self.axes.spines['left'].set_visible(False)
 
-        self.ax.get_xaxis().set_ticks([])
-        self.ax.get_yaxis().set_ticks([])
+        self.axes.get_xaxis().set_ticks([])
+        self.axes.get_yaxis().set_ticks([])
 
-        self.ax.set_facecolor((0.8, 0.8, 0.8))
+        self.axes.set_facecolor((0.8, 0.8, 0.8))
 
         # self.figure.tight_layout()
         self.figure.subplots_adjust(
@@ -50,8 +46,41 @@ class AudioCanvas(FigureCanvasQTAgg):
             wspace=0,
         )
 
-    def update_canvas(self, data):
+    def update_data(self, data):
         self.line.set_ydata(data)
+        self.draw()
+
+
+class CentBar(FigureCanvasQTAgg):
+
+    def __init__(self) -> None:
+        self.figure = Figure()
+        super().__init__(self.figure)
+        self.axes = self.figure.add_subplot(1, 1, 1)
+        self.axes.set_xlim(-100.0, 100.0)
+        self.bar, = self.axes.barh([1, ], width=[50], color=utils.COLOR)
+
+        self.axes.set_facecolor((0.8, 0.8, 0.8))
+
+        self.axes.spines['top'].set_visible(False)
+        self.axes.spines['right'].set_visible(False)
+        self.axes.spines['bottom'].set_visible(False)
+        self.axes.spines['left'].set_visible(False)
+
+        self.axes.get_xaxis().set_ticks([])
+        self.axes.get_yaxis().set_ticks([])
+
+        self.figure.subplots_adjust(
+            top=1,
+            bottom=0,
+            left=0,
+            right=1,
+            hspace=0,
+            wspace=0,
+        )
+
+    def update_data(self, data):
+        self.bar.set_width(data)
         self.draw()
 
 
@@ -59,7 +88,7 @@ class Tuner(QtWidgets.QWidget):
 
     SAMPLING_RATE = 44100
     CHUNK_SIZE = 2048
-    BUFFER_SIZE = CHUNK_SIZE * 5
+    BUFFER_SIZE = CHUNK_SIZE * 10
     ZERO_PADDING = 3
     A0 = 27.5
     NOTENAMES = 'A A# B C C# D D# E F F# G G#'.split(" ")
@@ -76,11 +105,22 @@ class Tuner(QtWidgets.QWidget):
         self.audio_canvas = AudioCanvas(self.BUFFER_SIZE)
         self.form.buffer_layout.addWidget(self.audio_canvas)
 
+        self.centbar = CentBar()
+        self.form.centbar_layout.addWidget(self.centbar)
+
         self.signal = Signal(self)
         self.signal.frame.connect(self.draw_frame)
 
         # init audio
         self.audio = pyaudio.PyAudio()
+        index = 0
+        for i in range(0, self.audio.get_host_api_count()):
+            info = self.audio.get_device_info_by_host_api_device_index(0, i)
+            if info.get('maxInputChannels') == 0:
+                continue
+            index = i
+            logger.debug(info)
+
         self.stream = self.audio.open(
             format=pyaudio.paInt16,
             channels=1,
@@ -88,7 +128,10 @@ class Tuner(QtWidgets.QWidget):
             input=True,
             # output=True,
             frames_per_buffer=self.CHUNK_SIZE,
-            stream_callback=self.stream_callback)
+            stream_callback=self.stream_callback,
+            input_device_index=index,
+        )
+
         self.stream.start_stream()
         self.buffer = np.zeros(self.BUFFER_SIZE)
         self.hanning = np.hanning(len(self.buffer))
@@ -102,12 +145,18 @@ class Tuner(QtWidgets.QWidget):
         return super().closeEvent(event)
 
     def update_note(self, freq: float):
+        if freq < 27.5 or freq > 5000:
+            return
+
         n = 12 * np.log2(freq / self.A0)
         if n > 88 or n < 0:
             return
 
+        self.form.hertz.setText(f'{freq:04.02f}')
+
         cents = (n - round(n)) * 100
         self.form.cents.setText(f'{cents:.02f}')
+        self.centbar.update_data(cents)
 
         # logger.debug(n)
 
@@ -126,9 +175,8 @@ class Tuner(QtWidgets.QWidget):
     def draw_frame(self, datas):
         buffer = datas[0]
         freq = datas[1]
-        self.form.hertz.setText(f'{freq:04.02f}')
         self.update_note(freq)
-        self.audio_canvas.update_canvas(buffer)
+        self.audio_canvas.update_data(buffer)
 
     def stream_callback(self, data, frame_count, time_info, status):
         # logger.debug("input stream data len %s %s", len(data), type(data))
@@ -156,5 +204,6 @@ class Tuner(QtWidgets.QWidget):
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     wnd = Tuner()
+    # wnd = CentBar()
     wnd.show()
     app.exec()
