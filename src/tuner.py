@@ -188,8 +188,6 @@ class Tuner(QtWidgets.QWidget):
         self.sample_rate = 44100
         self.buffer = np.zeros(self.BUFFER_SIZE)
         self.hanning = np.hanning(len(self.buffer))
-        self.frequencies = np.fft.fftfreq(len(self.buffer), 1. / self.sample_rate)
-        self.frequencies = self.frequencies[:len(self.buffer) // 2]
 
         self.audio = pyaudio.PyAudio()
         for i in range(0, self.audio.get_host_api_count()):
@@ -205,6 +203,8 @@ class Tuner(QtWidgets.QWidget):
             self.stream.stop_stream()
         info = self.form.input_devices_box.itemData(index)
         self.sample_rate = int(info.get("defaultSampleRate"))
+        self.frequencies = np.fft.fftfreq(len(self.buffer), 1. / self.sample_rate)
+        self.frequencies = self.frequencies[:len(self.buffer) // 2]
         logger.info("start stream %s", info)
         try:
             self.stream = self.audio.open(
