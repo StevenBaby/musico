@@ -57,10 +57,33 @@ class AudioCanvas(MPLCanvas):
     def update_data(self, data: np.ndarray):
         # data = data.copy() / data.max()
         if self.line is None:
-            self.line,  = self.axes.plot(data, color=utils.COLOR)
+            self.line,  = self.axes.plot(data, color=utils.PINK)
         else:
             self.line.set_ydata(data)
         self.draw()
+
+
+class FreqTicksCanvas(MPLCanvas):
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.axes.set_xlim(20, 5000)
+        self.figure.subplots_adjust(
+            top=1,
+            bottom=0.999,
+            left=0,
+            right=1,
+            hspace=0,
+            wspace=0,
+        )
+        self.axes.set_xscale('log')
+        self.axes.get_xaxis().set_ticks([], minor=True)
+
+        ticks = [(27.5 * 2 ** i) for i in range(8)]
+        labels = [f'$A_{i}$' for i in range(8)]
+        self.axes.get_xaxis().set_ticks(ticks, labels)
+        logger.info("set ticks %s", ticks)
+        logger.info("set labels %s", labels)
 
 
 class FreqCanvas(MPLCanvas):
@@ -68,11 +91,14 @@ class FreqCanvas(MPLCanvas):
     def __init__(self) -> None:
         super().__init__()
         self.line = None
-        self.axes.set_ylim(-0.1, 1.5)
-        self.axes.set_xscale('log')
+        self.bar = None
+
+        self.axes.set_ylim(-0.1, 1.1)
+        self.axes.set_xlim(20, 5000)
+        # self.figure.tight_layout()
         self.figure.subplots_adjust(
             top=1,
-            bottom=0.15,
+            bottom=0,
             left=0,
             right=1,
             hspace=0,
@@ -80,19 +106,31 @@ class FreqCanvas(MPLCanvas):
         )
 
     def update_data(self, freqs: np.ndarray, amps: np.ndarray, freq: float):
-        if freq < 27.5 or freq > 5000:
+        if freq > 5000:
             return
 
         freqs = freqs[:len(amps)]
         freqs[freqs < 1] = 1.0
 
-        amps = amps / amps.max()
+        if amps.max() > 0:
+            amps = amps / amps.max()
+
+        width = 0
+        if freq > 20:
+            width = freq / 50
 
         if self.line is None:
-            self.line, = self.axes.plot(freqs, amps, color=utils.COLOR)
+            self.line, = self.axes.plot(freqs, amps, color=utils.PINK)
+            self.bar, = self.axes.bar(
+                freq - width / 2, height=1, width=width, color=utils.ORANGE)
+            self.axes.set_xscale('log')
+            self.axes.get_xaxis().set_ticks([], minor=True)
+            self.axes.get_xaxis().set_ticks([])
         else:
             self.line.set_xdata(freqs)
             self.line.set_ydata(amps)
+            self.bar.set_x(freq - width / 2)
+            self.bar.set_width(width)
 
         self.draw()
 
@@ -102,7 +140,7 @@ class CentBar(MPLCanvas):
     def __init__(self) -> None:
         super().__init__()
         self.axes.set_xlim(-100.0, 100.0)
-        self.bar, = self.axes.barh([1, ], width=[50], color=utils.COLOR)
+        self.bar, = self.axes.barh([1, ], width=[50], color=utils.PINK)
 
     def update_data(self, data):
         self.bar.set_width(data)
@@ -132,6 +170,8 @@ class Tuner(QtWidgets.QWidget):
 
         self.freq_canvas = FreqCanvas()
         self.form.freq_layout.addWidget(self.freq_canvas)
+
+        self.form.freq_tick_layout.addWidget(FreqTicksCanvas())
 
         self.centbar = CentBar()
         self.form.centbar_layout.addWidget(self.centbar)
@@ -231,6 +271,7 @@ class Tuner(QtWidgets.QWidget):
         frame = np.frombuffer(data, np.int16)
         self.buffer[:-self.CHUNK_SIZE] = self.buffer[self.CHUNK_SIZE:]
         self.buffer[-self.CHUNK_SIZE:] = frame
+        self.buffer[np.abs(self.buffer) < 10.0] = 0.0
 
         sdata = self.buffer * self.hanning
 

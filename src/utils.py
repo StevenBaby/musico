@@ -22,4 +22,8 @@ from PySide6.QtGui import (
 DIRNAME = os.path.dirname(os.path.abspath(__file__))
 ASSETS = os.path.abspath(os.path.join(DIRNAME, "../assets"))
 FAVICON = os.path.join(ASSETS, "favicon.ico")
-COLOR = "#e03997"
+
+RED = '#db2828'
+PINK = '#e03997'
+BLUE = '#2185d0'
+ORANGE ='#f2711c'
