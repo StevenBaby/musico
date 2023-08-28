@@ -5,11 +5,6 @@ from utils import *
 from logger import logger
 import ui.tuner
 
-'''
-References:
-    https://github.com/TomSchimansky/GuitarTuner
-'''
-
 
 class Signal(QtCore.QObject):
 
@@ -152,7 +147,6 @@ class Tuner(QtWidgets.QWidget):
     SAMPLING_RATE = 44100
     CHUNK_SIZE = 2048
     BUFFER_SIZE = CHUNK_SIZE * 10
-    ZERO_PADDING = 3
     A0 = 27.5
     NOTENAMES = 'A A# B C C# D D# E F F# G G#'.split(" ")
 
@@ -186,6 +180,8 @@ class Tuner(QtWidgets.QWidget):
         # init audio
         self.buffer = np.zeros(self.BUFFER_SIZE)
         self.hanning = np.hanning(len(self.buffer))
+        self.frequencies = np.fft.fftfreq(
+            len(self.buffer), 1. / self.SAMPLING_RATE)
 
         self.audio = pyaudio.PyAudio()
         for i in range(0, self.audio.get_host_api_count()):
@@ -215,6 +211,7 @@ class Tuner(QtWidgets.QWidget):
             stream_callback=self.stream_callback,
             input_device_index=info.get('index'),
         )
+        logger.info("start stream %s", info)
         self.stream.start_stream()
 
     def closeEvent(self, event: QCloseEvent) -> None:
@@ -226,7 +223,7 @@ class Tuner(QtWidgets.QWidget):
         return super().closeEvent(event)
 
     def input_index_changed(self, index):
-        logger.debug("index changed %s", index)
+        # logger.debug("index changed %s", index)
         self.restart_stream(index)
 
     def update_note(self, freq: float):
@@ -269,23 +266,29 @@ class Tuner(QtWidgets.QWidget):
     def stream_callback(self, data, frame_count, time_info, status):
         # logger.debug("input stream data len %s %s", len(data), type(data))
         frame = np.frombuffer(data, np.int16)
+
+        # References:
+        # https://github.com/TomSchimansky/GuitarTuner
         self.buffer[:-self.CHUNK_SIZE] = self.buffer[self.CHUNK_SIZE:]
         self.buffer[-self.CHUNK_SIZE:] = frame
         self.buffer[np.abs(self.buffer) < 10.0] = 0.0
 
-        sdata = self.buffer * self.hanning
+        ys = self.buffer * self.hanning
 
-        amps = np.absolute(np.fft.rfft(sdata))
-        amps = amps[:int(len(amps) / 2)]
+        amps = np.absolute(np.fft.fft(ys))
+        amps = amps[:int(len(self.buffer) / 2)]
 
         # todo (Harmonic Product Spectrum)
+        # reference:
+        # http://musicweb.ucsd.edu/~trsmyth/analysis/Harmonic_Product_Spectrum.html
 
-        freqs = np.fft.fftfreq(int(len(amps) * 2), 1. / self.SAMPLING_RATE)
+        freq = self.frequencies[np.argmax(amps)]
 
-        freq = freqs[np.argmax(amps)]
-        # logger.debug(freq)
-
-        self.signal.frame.emit([self.buffer, freqs, amps, freq])
+        self.signal.frame.emit([
+            self.buffer,
+            self.frequencies,
+            amps,
+            freq])
 
         return (data, pyaudio.paContinue)
 
