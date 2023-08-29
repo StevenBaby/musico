@@ -20,11 +20,14 @@ from PySide6 import (
 
 from PySide6.QtGui import (
     QCloseEvent,
+    QKeyEvent,
+    QMouseEvent
 )
 
 DIRNAME = os.path.dirname(os.path.abspath(__file__))
 ASSETS = os.path.abspath(os.path.join(DIRNAME, "../assets"))
 FAVICON = os.path.join(ASSETS, "favicon.ico")
+KEYBOARD = os.path.join(ASSETS, "keyboard.jpg")
 
 RED = '#db2828'
 PINK = '#e03997'
